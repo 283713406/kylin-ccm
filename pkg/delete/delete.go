@@ -1,0 +1,334 @@
+/*
+Copyright 2020 The KubeSphere Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package delete
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"unicode"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	kubekeyapi "kylin-ccm/pkg/apis/kubekey/v1alpha1"
+	"kylin-ccm/pkg/config"
+	"kylin-ccm/pkg/util/executor"
+	"kylin-ccm/pkg/util/logs"
+	"kylin-ccm/pkg/util/manager"
+)
+
+func ResetCluster(clusterCfgFile string, logger *log.Logger, verbose bool) error {
+	cfg, err := config.ParseClusterCfg("nodeName", "userName", "k8sVersion", "ksVersion", false, false)
+	if err != nil {
+		return errors.Wrap(err, "Failed to download cluster config")
+	}
+
+	return Execute(executor.NewExecutor(&cfg.Spec, verbose, false, true))
+}
+
+func ResetNode(clusterCfgFile string, logger *log.Logger, verbose bool, nodeName string) error {
+	if "" == nodeName {
+		return errors.New("Node name does not exist")
+	}
+	fp, _ := filepath.Abs(clusterCfgFile)
+	cmd0 := fmt.Sprintf("cat %s | grep %s | wc -l", fp, nodeName)
+	nodeNameNum, err0 := exec.Command("/bin/sh", "-c", cmd0).CombinedOutput()
+	if err0 != nil {
+		errors.Wrap(err0,"Failed to get node num")
+	}
+	if string(nodeNameNum) == "0\n"{
+		fmt.Sprintf("Please check the node name in the config-sample.yaml")
+		os.Exit(0)
+	}
+	if string(nodeNameNum) == "2\n" {
+		cmd := fmt.Sprintf("sed -i /%s/d %s", nodeName, fp)
+		_ = exec.Command("/bin/sh", "-c", cmd).Run()
+		cfg, _ := config.ParseClusterCfg("nodeName", "userName", "k8sVersion", "ksVersion", false, false)
+		return Execute1(executor.NewExecutor(&cfg.Spec, verbose, false,true))
+	}
+	if string(nodeNameNum) == "1\n" {
+		cmd := fmt.Sprintf("sed -i /%s/d %s", nodeName, fp)
+		_ = exec.Command("/bin/sh", "-c", cmd).Run()
+		cfg, err := config.ParseClusterCfg("nodeName", "userName", "k8sVersion", "ksVersion", false, false)
+		if err != nil{
+			errors.Wrap(err, "Failed to download cluster config")
+		}
+		mgr, err1 := executor.NewExecutor(&cfg.Spec, verbose, false, true).CreateManager()
+		if err1 != nil{
+			errors.Wrap(err1, "Failed to get cluster config")
+		}
+		var newNodeName []string
+		for i := 0; i<len(mgr.WorkerNodes);i++{
+			nodename := mgr.WorkerNodes[i].Name
+			if nodeName == nodename{
+				continue
+			}else {
+				newNodeName = append(newNodeName, nodename)
+			}
+		}
+		var connNodeName []string
+		for j := 0;j <len(newNodeName);j++{
+			t := j
+			nodename1 := newNodeName[t]
+			for ;t+1<len(newNodeName)&& Isadjoin(newNodeName[t],newNodeName[t+1]);{
+				t ++
+			}
+			if t == j{
+				connNodeName = append(connNodeName, nodename1)
+			}else {
+				connNodeName = append(connNodeName, Merge(nodename1, newNodeName[t]))
+				j = t
+			}
+		}
+		cmd1 := fmt.Sprintf("sed -i -n '1,/worker/p;/controlPlaneEndpoint/,$p' %s",fp)
+		exec.Command("/bin/sh","-c",cmd1).Run()
+		for k := 0; k<len(connNodeName);k++{
+			workPar := connNodeName[k]
+			workPar1 := fmt.Sprintf("%s",workPar)
+			cmd2 := fmt.Sprintf("sed -i '/worker/a\\ \\ \\ \\ \\- %s' %s",workPar1, fp)
+			exec.Command("/bin/sh", "-c",cmd2).Run()
+		}
+		cfg1, _ := config.ParseClusterCfg("nodeName", "userName", "k8sVersion", "ksVersion", false, false)
+		return Execute1(executor.NewExecutor(&cfg1.Spec, verbose, false,true))
+	}
+
+	return nil
+}
+func Execute(executor *executor.Executor) error {
+	mgr, err := executor.CreateManager()
+	if err != nil {
+		return err
+	}
+	return ExecTasks(mgr)
+}
+func Execute1(executor * executor.Executor) error {
+	mgr, err := executor.CreateManager()
+	if err != nil{
+		return err
+	}
+	return ExecTasks1(mgr)
+}
+func ExecTasks(mgr *manager.Manager) error {
+	resetTasks := []manager.Task{
+		{Task: ResetKubeCluster, ErrMsg: "Failed to reset kube cluster"},
+	}
+
+	for _, step := range resetTasks {
+		if err := step.Run(mgr); err != nil {
+			return errors.Wrap(err, step.ErrMsg)
+		}
+	}
+
+	logs.MyLogger.Infoln("Successful.")
+
+	return nil
+}
+func ExecTasks1(mgr *manager.Manager) error {
+	resetNodeTasks := []manager.Task{
+		{Task: ResetKubeNode, ErrMsg: "Failed to reset kube cluster"},
+	}
+
+	for _, step := range resetNodeTasks {
+		if err := step.Run(mgr); err != nil {
+			return errors.Wrap(err, step.ErrMsg)
+		}
+	}
+
+	logs.MyLogger.Infoln("Successful.")
+
+	return nil
+}
+
+func ResetKubeCluster(mgr *manager.Manager) error {
+	reader := bufio.NewReader(os.Stdin)
+	input, err := Confirm(reader)
+	if err != nil {
+		return err
+	}
+	if input == "no" {
+		os.Exit(0)
+	}
+
+	logs.MyLogger.Infoln("Resetting kubernetes cluster ...")
+
+	return mgr.RunTaskOnK8sNodes(resetKubeCluster, true)
+}
+func ResetKubeNode(mgr *manager.Manager) error {
+	reader := bufio.NewReader(os.Stdin)
+	input, err := Confirm1(reader)
+	if err != nil {
+		return err
+	}
+	if input == "no" {
+		os.Exit(0)
+	}
+
+	logs.MyLogger.Infoln("Resetting kubernetes node ...")
+
+	return mgr.RunTaskOnMasterNodes(resetKubeNode, true)
+}
+
+func resetKubeNode(mgr *manager.Manager, _ *kubekeyapi.HostCfg) error {
+	if mgr.Runner.Index == 0{
+		var deletenodename string
+		var tmp []string
+		output1, _ := mgr.Runner.ExecuteCmd("sudo -E  /usr/local/bin/kubectl get nodes | grep -v NAME | grep -v 'master' | awk '{print $1}'", 0, true)
+		if !strings.Contains(output1,"\r\n"){
+			tmp = append(tmp,output1)
+		}else {
+			tmp = strings.Split(output1, "\r\n")
+		}
+		var tmp1 string
+		for j := 0; j < len(mgr.WorkerNodes); j++ {
+			tmp1 += mgr.WorkerNodes[j].Name + "\r\n"
+		}
+		for i := 0; i < len(tmp); i++ {
+			if strings.Contains(tmp1, tmp[i]) {
+				continue
+			} else {
+				deletenodename = tmp[i]
+				break
+			}
+		}
+		DrainAndDeleteNode(mgr, deletenodename)
+	}
+	return nil
+}
+func DrainAndDeleteNode(mgr *manager.Manager, deleteNodeName string) error {
+	_, err := mgr.Runner.ExecuteCmd(fmt.Sprintf("sudo -E /bin/sh -c \"/usr/local/bin/kubectl drain %s --delete-local-data --ignore-daemonsets\"", deleteNodeName), 5, true)
+	if err != nil {
+		errors.Wrap(err, "Failed to drain the node")
+	}
+	_, err1 := mgr.Runner.ExecuteCmd(fmt.Sprintf("sudo -E /bin/sh -c \"/usr/local/bin/kubectl delete node %s\"", deleteNodeName), 5, true)
+	if err1 != nil {
+		errors.Wrap(err1, "Failed to delete the node")
+	}
+	return nil
+}
+func Merge(name1, name2 string) (endname string) {
+	par1, par2 := SplitNum(name1)
+	_, par4 := SplitNum(name2)
+	var endName string
+	endName = fmt.Sprintf("%s[%s:%s]", par1, strconv.Itoa(par2), strconv.Itoa(par4))
+	return endName
+}
+func Isadjoin(name1, name2 string) bool {
+	Isad := false
+	par1, par2 := SplitNum(name1)
+	par3, par4 := SplitNum(name2)
+	if par1 == par3 && par4 == par2+1 {
+		Isad = true
+	}
+	return Isad
+}
+
+func SplitNum(nodename string) (name string, num int) {
+	nodelen := len(nodename)
+	i := nodelen - 1
+	for ; nodelen > 0; i-- {
+		if !unicode.IsDigit(rune(nodename[i])) {
+			num, _ := strconv.Atoi(nodename[i+1:])
+			name := nodename[:i+1]
+			return name, num
+			break
+		}
+	}
+	return "", 0
+}
+
+var clusterFiles = []string{
+	"/usr/local/bin/etcd",
+	"/etc/ssl/etcd",
+	"/var/lib/etcd",
+	"/etc/etcd.env",
+	"/etc/kubernetes",
+	"/etc/systemd/system/etcd.service",
+	"/var/logs/calico",
+	"/etc/cni",
+	"/var/logs/pods/",
+	"/var/lib/cni",
+	"/var/lib/calico",
+	"/run/calico",
+	"/run/flannel",
+	"/etc/flannel",
+	"/var/openebs",
+	"/etc/systemd/system/kubelet.service.d",
+	"/usr/local/bin/kubelet",
+	"/usr/local/bin/kubeadm",
+	"/usr/local/bin/kubectl",
+	"/usr/bin/kubelet",
+}
+
+var cmdsList = []string{
+	"iptables -F",
+	"iptables -X",
+	"iptables -F -t nat",
+	"iptables -X -t nat",
+	"ip link del kube-ipvs0",
+	"ip link del nodelocaldns",
+}
+
+func resetKubeCluster(mgr *manager.Manager, _ *kubekeyapi.HostCfg) error {
+	_, _ = mgr.Runner.ExecuteCmd("sudo -E /bin/sh -c \"/usr/local/bin/kubeadm reset -f\"", 0, true)
+	fmt.Println(strings.Join(cmdsList, " && "))
+	_, _ = mgr.Runner.ExecuteCmd(fmt.Sprintf("sudo -E /bin/sh -c \"%s\"", strings.Join(cmdsList, " && ")), 0, true)
+	_ = deleteFiles(mgr)
+	return nil
+}
+
+func deleteFiles(mgr *manager.Manager) error {
+	_, _ = mgr.Runner.ExecuteCmd("sudo -E /bin/sh -c \"systemctl stop etcd && exit 0\"", 0, true)
+	for _, file := range clusterFiles {
+		_, _ = mgr.Runner.ExecuteCmd(fmt.Sprintf("sudo -E /bin/sh -c \"rm -rf %s\"", file), 0, false)
+	}
+	_, _ = mgr.Runner.ExecuteCmd("sudo -E /bin/sh -c \"systemctl daemon-reload && exit 0\"", 0, true)
+	return nil
+}
+
+func Confirm(reader *bufio.Reader) (string, error) {
+	for {
+		fmt.Printf("Are you sure to delete this cluster? [yes/no]: ")
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+		input = strings.TrimSpace(input)
+
+		if input != "" && (input == "yes" || input == "no") {
+			return input, nil
+		}
+	}
+}
+
+func Confirm1(reader *bufio.Reader) (string, error) {
+	for {
+		fmt.Printf("Are you sure to delete this node? [yes/no]: ")
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+		input = strings.TrimSpace(input)
+
+		if input != "" && (input == "yes" || input == "no") {
+			return input, nil
+		}
+	}
+}

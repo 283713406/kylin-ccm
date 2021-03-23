@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="4ac1075f-cbef-42a5-b847-7b42368afa63" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
+  </component>
+  <component name="GOROOT" path="D:\Go\go" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GoLibraries">
+    <option name="urls">
+      <list>
+        <option value="file://$PROJECT_DIR$/.." />
+        <option value="file://$PROJECT_DIR$/../k8s.io/kubernetes/staging" />
+      </list>
+    </option>
+    <option name="useGoPathFromSystemEnvironment" value="false" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/go.mod" root0="SKIP_HIGHLIGHTING" />
+  </component>
+  <component name="ProjectId" id="1nxVR9AXiZMDyjjepcKutmrLW8O" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DefaultGoTemplateProperty" value="Go File" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="configurable.Global.GOPATH.is.expanded" value="true" />
+    <property name="configurable.Module.GOPATH.is.expanded" value="false" />
+    <property name="configurable.Project.GOPATH.is.expanded" value="true" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="go.sdk.automatically.set" value="true" />
+    <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="com.goide.configuration.GoLibrariesConfigurableProvider" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\kylincloud\qgr\src\kylin-ccm" />
+      <recent name="D:\kylincloud\qgr\src\kylin-ccm\entity" />
+      <recent name="D:\kylincloud\qgr\src\kylin-ccm\service" />
+      <recent name="D:\kylincloud\qgr\src\github.com\kylin\kylin-ccm\controllers" />
+      <recent name="D:\kylincloud\qgr\src\github.com\kylin\kylin-ccm" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.conf" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="617" y="234" key="FileChooserDialogImpl" timestamp="1612599484707">
+      <screen x="0" y="0" width="1600" height="860" />
+    </state>
+    <state x="617" y="234" key="FileChooserDialogImpl/0.0.1600.860/1600.0.1920.1080@0.0.1600.860" timestamp="1612599484707" />
+    <state x="2340" y="294" key="FileChooserDialogImpl/0.0.1600.860/1600.0.1920.1080@1600.0.1920.1080" timestamp="1612427838302" />
+    <state x="384" y="147" key="SettingsEditor" timestamp="1612596619185">
+      <screen x="0" y="0" width="1600" height="860" />
+    </state>
+    <state x="384" y="147" key="SettingsEditor/0.0.1600.860/1600.0.1920.1080@0.0.1600.860" timestamp="1612596619185" />
+    <state x="2061" y="184" key="SettingsEditor/0.0.1600.860/1600.0.1920.1080@1600.0.1920.1080" timestamp="1612427907643" />
+    <state width="498" height="446" key="SwitcherDM" timestamp="1612581338929">
+      <screen x="1600" y="0" width="1920" height="1080" />
+    </state>
+    <state width="498" height="446" key="SwitcherDM/0.0.1600.860/1600.0.1920.1080@1600.0.1920.1080" timestamp="1612581338929" />
+    <state x="551" y="110" width="566" height="641" key="find.popup" timestamp="1616415704443">
+      <screen x="0" y="0" width="1600" height="860" />
+    </state>
+    <state x="551" y="110" width="566" height="641" key="find.popup/0.0.1600.860/1600.0.1920.1080@0.0.1600.860" timestamp="1616415704443" />
+    <state x="2261" y="138" width="598" height="804" key="find.popup/0.0.1600.860/1600.0.1920.1080@1600.0.1920.1080" timestamp="1613804942181" />
+  </component>
+</project>

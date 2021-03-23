@@ -1,0 +1,60 @@
+CREATE TABLE `t_cluster` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `cluster_name` varchar(32) NOT NULL DEFAULT '',
+  `node_name` varchar(32) NOT NULL DEFAULT '',
+  `user_name` varchar(32) NOT NULL DEFAULT '',
+  `k8s_version` varchar(10) NOT NULL DEFAULT '',
+  `ks_version` varchar(10) NOT NULL DEFAULT '',
+  `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `cluster_name` (`cluster_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `t_perm` (
+  `module` varchar(20) NOT NULL DEFAULT '' COMMENT '模块名',
+  `action` varchar(20) NOT NULL DEFAULT '' COMMENT '操作名',
+  UNIQUE KEY `module` (`module`,`action`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `t_perm` (`module`, `action`)
+VALUES
+	('agent','add'),
+	('agent','del'),
+	('agent','edit'),
+	('agent','list'),
+	('agent','projects'),
+	('env','add'),
+	('env','del'),
+	('env','edit'),
+	('env','list'),
+	('mailtpl','add'),
+	('mailtpl','del'),
+	('mailtpl','edit'),
+	('mailtpl','list'),
+	('project','add'),
+	('project','del'),
+	('project','edit'),
+	('project','list'),
+	('review','detail'),
+	('review','list'),
+	('review','review'),
+	('role','add'),
+	('role','del'),
+	('role','edit'),
+	('role','list'),
+	('role','perm'),
+	('server','add'),
+	('server','del'),
+	('server','edit'),
+	('server','list'),
+	('server','projects'),
+	('task','create'),
+	('task','del'),
+	('task','detail'),
+	('task','list'),
+	('task','publish'),
+	('user','add'),
+	('user','del'),
+	('user','edit'),
+	('user','list');
