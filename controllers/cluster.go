@@ -2,15 +2,16 @@ package controllers
 
 import (
 	"encoding/json"
-	"kylin-ccm/pkg/util/logs"
+	"kylin-ccm/controllers/base"
+	"kylin-ccm/pkg/install"
 
 	"kylin-ccm/entity"
-	"kylin-ccm/pkg/install"
+	"kylin-ccm/pkg/util/logs"
 	"kylin-ccm/service"
 )
 
 type ClusterController struct {
-	BaseController
+	base.BaseController
 }
 
 func (c *ClusterController) Get() {
@@ -20,34 +21,41 @@ func (c *ClusterController) Get() {
 }
 
 func (c *ClusterController) Post() {
-	if c.isPost() {
+	if c.IsPost() {
 		logs.MyLogger.Infof("Start create cluster")
-		var cluster entity.SingleCluster
+		var singleCluster entity.SingleCluster
 		data := c.Ctx.Input.RequestBody
-		//json数据封装到user对象中
-		err := json.Unmarshal(data, &cluster)
+		err := json.Unmarshal(data, &singleCluster)
 		if err != nil {
 			logs.MyLogger.Infof( "json.Unmarshal is err:", err.Error())
 		}
 
 		isAllInOne := false
 		ksEnable := false
-		if cluster.IsAllInOne == "true" {
+		if singleCluster.IsAllInOne == "true" {
 			isAllInOne = true
 		}
 
-		if cluster.KsEnable == "true" {
+		if singleCluster.KsEnable == "true" {
 			ksEnable = true
 		}
 
-		if err = install.CreateCluster(cluster.NodeName, cluster.UserName, cluster.K8sVersion,
-			cluster.KsVersion, isAllInOne, ksEnable); err != nil {
+		if err = install.CreateCluster(singleCluster.NodeName, singleCluster.UserName, singleCluster.K8sVersion,
+			singleCluster.KsVersion, isAllInOne, ksEnable); err != nil {
 			logs.MyLogger.Errorf("Failed to create cluster, error: %v", err.Error())
+			return
 		}
 
-		if err = service.ClusterService.AddCluster(cluster.ClusterName, cluster.NodeName,
-			cluster.K8sVersion); err != nil {
+		var cluster service.Cluster
+		cluster.ClusterName = singleCluster.ClusterName
+		cluster.Description = "this is test cluster"
+		cluster.Status = "Running"
+		cluster.User = "test"
+
+		_, err = service.ClusterService.AddCluster(&cluster);
+		if err != nil {
 			logs.MyLogger.Errorf("Failed to add cluster, error: %v", err.Error())
+			return
 		}
 	}
 	c.Data["pageTitle"] = "添加集群"
@@ -65,4 +73,14 @@ func (c *ClusterController) Post() {
 //	c.checkError(err)
 //
 //	c.redirect(beego.URLFor("UserController.List"))
+//}
+
+//func getSqlCluster(sc entity.SingleCluster) service.Cluster {
+//	var cluster service.Cluster
+//	cluster.ClusterName = sc.ClusterName
+//	cluster.Description = "this is test cluster"
+//	cluster.Status = "Running"
+//	cluster.User = "test"
+//
+//	return cluster
 //}

@@ -4,7 +4,6 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/go-sql-driver/mysql"
-	"kylin-ccm/entity"
 	"net/url"
 )
 
@@ -33,7 +32,7 @@ func Init() {
 	orm.RegisterDataBase("default", "mysql", dsn)
 
 	orm.RegisterModelWithPrefix(tablePrefix,
-		new(entity.SingleCluster),
+		new(Cluster),
 	)
 
 	if beego.AppConfig.String("runmode") == "dev" {

@@ -1,8 +1,9 @@
-package controllers
+package base
 
 import (
-	"github.com/astaxie/beego"
 	"strings"
+
+	"github.com/astaxie/beego"
 )
 
 type BaseController struct {
@@ -30,7 +31,7 @@ func (b *BaseController) Prepare() {
 }
 
 // 是否POST提交
-func (b *BaseController) isPost() bool {
+func (b *BaseController) IsPost() bool {
 	return b.Ctx.Request.Method == "POST"
 }
 
