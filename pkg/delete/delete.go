@@ -35,13 +35,14 @@ import (
 	"kylin-ccm/pkg/util/manager"
 )
 
-func ResetCluster(clusterCfgFile string, logger *log.Logger, verbose bool) error {
-	cfg, err := config.ParseClusterCfg("nodeName", "userName", "k8sVersion", "ksVersion", false, false)
+func ResetCluster(isAllInOne bool) error {
+	cfg, err := config.ParseClusterCfg("nodeName", "root", "k8sVersion",
+		"ksVersion", isAllInOne, false)
 	if err != nil {
 		return errors.Wrap(err, "Failed to download cluster config")
 	}
 
-	return Execute(executor.NewExecutor(&cfg.Spec, verbose, false, true))
+	return Execute(executor.NewExecutor(&cfg.Spec, true, false, true))
 }
 
 func ResetNode(clusterCfgFile string, logger *log.Logger, verbose bool, nodeName string) error {
@@ -158,15 +159,6 @@ func ExecTasks1(mgr *manager.Manager) error {
 }
 
 func ResetKubeCluster(mgr *manager.Manager) error {
-	reader := bufio.NewReader(os.Stdin)
-	input, err := Confirm(reader)
-	if err != nil {
-		return err
-	}
-	if input == "no" {
-		os.Exit(0)
-	}
-
 	logs.MyLogger.Infoln("Resetting kubernetes cluster ...")
 
 	return mgr.RunTaskOnK8sNodes(resetKubeCluster, true)
@@ -301,21 +293,6 @@ func deleteFiles(mgr *manager.Manager) error {
 	}
 	_, _ = mgr.Runner.ExecuteCmd("sudo -E /bin/sh -c \"systemctl daemon-reload && exit 0\"", 0, true)
 	return nil
-}
-
-func Confirm(reader *bufio.Reader) (string, error) {
-	for {
-		fmt.Printf("Are you sure to delete this cluster? [yes/no]: ")
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			return "", err
-		}
-		input = strings.TrimSpace(input)
-
-		if input != "" && (input == "yes" || input == "no") {
-			return input, nil
-		}
-	}
 }
 
 func Confirm1(reader *bufio.Reader) (string, error) {

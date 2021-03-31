@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"kylin-ccm/controllers/base"
+	"kylin-ccm/pkg/delete"
 	"kylin-ccm/pkg/install"
 
 	"kylin-ccm/entity"
@@ -15,9 +16,17 @@ type ClusterController struct {
 }
 
 func (c *ClusterController) Get() {
-	c.Data["Website"] = "beego.me"
-	c.Data["Email"] = "astaxie@gmail.com"
-	c.TplName = "index.tpl"
+	logs.MyLogger.Infof("Start get clusterInfo")
+
+	clusterName := c.Ctx.Input.Param(":name")
+
+	cluster, err := service.ClusterService.GetClusterByName(clusterName)
+	if err != nil {
+		logs.MyLogger.Errorf("Failed to get cluster by cluster name, error: %v", err.Error())
+		return
+	}
+
+	logs.MyLogger.Infof("clusterInfo: ", cluster)
 }
 
 func (c *ClusterController) Post() {
@@ -51,6 +60,7 @@ func (c *ClusterController) Post() {
 		cluster.Description = "this is test cluster"
 		cluster.Status = "Running"
 		cluster.User = "test"
+		cluster.IsAllInOne = isAllInOne
 
 		_, err = service.ClusterService.AddCluster(&cluster);
 		if err != nil {
@@ -62,18 +72,27 @@ func (c *ClusterController) Post() {
 
 }
 
-//func (c *ClusterController) Del() {
-//	id, _ := c.GetInt("id")
-//
-//	if id == 1 {
-//		c.showMsg("不能删除ID为1的帐号", MSG_ERR)
-//	}
-//
-//	err := service.UserService.DeleteUser(id)
-//	c.checkError(err)
-//
-//	c.redirect(beego.URLFor("UserController.List"))
-//}
+func (c *ClusterController) Del() {
+	logs.MyLogger.Infof("Start delete cluster")
+
+	clusterName := c.Ctx.Input.Param(":name")
+
+	cluster, err := service.ClusterService.GetClusterByName(clusterName)
+	if err != nil {
+		logs.MyLogger.Errorf("Failed to get cluster by cluster name, error: %v", err.Error())
+		return
+	}
+
+	if err := delete.ResetCluster(cluster.IsAllInOne); err != nil {
+		logs.MyLogger.Errorf("Failed to delete cluster, error: %v", err.Error())
+		return
+	}
+
+	if err := service.ClusterService.DeleteClusterByName(clusterName); err != nil {
+		logs.MyLogger.Errorf("Failed to delete cluster by cluster name, error: %v", err.Error())
+		return
+	}
+}
 
 //func getSqlCluster(sc entity.SingleCluster) service.Cluster {
 //	var cluster service.Cluster

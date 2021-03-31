@@ -13,6 +13,7 @@ type Cluster struct {
 	Description   string     `orm:"null;size(512)" json:"description,omitempty"`
 	CreateTime    *time.Time `orm:"auto_now_add;type(datetime)" json:"createTime,omitempty"`
 	UpdateTime    *time.Time `orm:"auto_now;type(datetime)" json:"updateTime,omitempty"`
+	IsAllInOne    bool       `orm:"size(128)" json:"user,omitempty"`
 	User          string     `orm:"size(128)" json:"user,omitempty"`
 	Status        string     `orm:"size(128)" json:"status"`
 }
@@ -55,11 +56,16 @@ func (this *clusterService) UpdateCluster(c *Cluster, fileds ...string) error {
 }
 
 // 删除集群
-func (this *clusterService) DeleteCluster(clusterName string) error {
+func (this *clusterService) DeleteClusterByName(clusterName string) error {
 	cluster := &Cluster{
 		ClusterName: clusterName,
 	}
-	_, err := o.Delete(cluster)
+
+	err := o.Read(cluster, "ClusterName")
+	if err == nil {
+		_, err = o.Delete(cluster)
+		return err
+	}
 	return err
 }
 

@@ -4,6 +4,7 @@ CREATE TABLE `ccm_cluster` (
   `description` varchar(512) NOT NULL DEFAULT '',
   `create_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `is_all_in_one` BOOL NOT NULL DEFAULT '',
   `user` varchar(128) NOT NULL DEFAULT '',
   `status` varchar(128) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
